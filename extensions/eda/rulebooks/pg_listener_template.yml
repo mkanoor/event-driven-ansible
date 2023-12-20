@@ -1,0 +1,14 @@
+---
+- name: PG Listener Template
+  hosts: all
+  sources:
+    - ansible.eda.range:
+        limit: 10
+  rules:
+    - name: Post event
+      condition: true
+      action:
+        pg_notify:
+          dsn: "{{ EDA_PG_NOTIFY_DSN }}"
+          channel: "{{ EDA_PG_NOTIFY_CHANNEL }}"
+          event: "{{ event }}"
