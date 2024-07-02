@@ -4,6 +4,7 @@ The event data to insert into the queue is specified in the required
 parameter payload and is an array of events.
 
 Optional Parameters:
+payload_file A yaml with an array of events can be used instead of payload
 randomize    True|False Randomize the events in the payload, default False
 display      True|False Display the event data in stdout, default False
 timestamp    True|False Add an event timestamp, default False
@@ -52,11 +53,14 @@ final_payload dict After all the events have been sent we send the optional
 from __future__ import annotations
 
 import asyncio
+import os
 import random
 import time
 from dataclasses import dataclass, fields
 from datetime import datetime
 from typing import Any
+
+import yaml
 
 
 @dataclass
@@ -67,6 +71,7 @@ class Args:
     final_payload: Any = None
     display: bool = False
     create_index: str = ""
+    payload_file: str = ""
 
 
 @dataclass
@@ -99,6 +104,10 @@ class Generic:
         """Insert event data into the queue."""
         self.queue = queue
         field_names = [f.name for f in fields(Args)]
+
+        if "payload_file" in args:
+            args["payload"] = ""
+
         self.my_args = Args(**{k: v for k, v in args.items() if k in field_names})
         field_names = [f.name for f in fields(ControlArgs)]
         self.control_args = ControlArgs(
@@ -123,6 +132,17 @@ class Generic:
         ]:
             msg = "time_format must be one of local, iso8601, epoch"
             raise ValueError(msg)
+
+        if self.my_args.payload_file:
+            if not os.path.isfile(self.my_args.payload_file):
+                msg = f"File {self.my_args.payload_file} not found"
+                raise ValueError(msg)
+            with open(self.my_args.payload_file) as f:
+                try:
+                    self.my_args.payload = yaml.safe_load(f)
+                except yaml.YAMLError as exc:
+                    msg = f"File {self.my_args.payload_file} parsing error {exc}"
+                    raise ValueError(msg)
 
         if not isinstance(self.my_args.payload, list):
             self.my_args.payload = [self.my_args.payload]
