@@ -29,7 +29,8 @@ Arguments:
                Default to PLAIN.
     sasl_plain_username: Username for SASL PLAIN authentication
     sasl_plain_password: Password for SASL PLAIN authentication
-
+    sasl_kerberos_service_name: The service name default is kafka
+    sasl_kerberos_domain_name: The kerberos REALM
 
 
 """
@@ -104,6 +105,8 @@ async def main(  # pylint: disable=R0914
         sasl_mechanism=args.get("sasl_mechanism", "PLAIN"),
         sasl_plain_username=args.get("sasl_plain_username"),
         sasl_plain_password=args.get("sasl_plain_password"),
+        sasl_kerberos_service_name=args.get("sasl_kerberos_service_name"),
+        sasl_kerberos_domain_name=args.get("sasl_kerberos_domain_name"),
     )
 
     await kafka_consumer.start()
