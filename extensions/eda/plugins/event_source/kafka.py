@@ -27,6 +27,8 @@ from aiokafka.helpers import create_ssl_context
 if TYPE_CHECKING:
     from aiokafka.structs import ConsumerRecord
 
+from .oauth_tokens import create_oauth_provider
+
 logger = logging.getLogger(__name__)
 
 DOCUMENTATION = r"""
@@ -1228,9 +1230,12 @@ async def main(
     # Validate and normalize topics
     topics = _validate_and_normalize_topics(args)
     topic_pattern = args.get("topic_pattern")
+    sasl_oauth_token_provider = None
 
     # Parse Kafka configuration
     config = _parse_kafka_args(args)
+    if config["sasl_mechanism"] == "OAUTHBEARER":
+       sasl_oauth_token_provider = create_oauth_provider(args)
 
     # Create SSL context if needed
     ssl_context, security_protocol = _create_ssl_context(
@@ -1258,6 +1263,7 @@ async def main(
         sasl_kerberos_service_name=config["sasl_kerberos_service_name"],
         sasl_kerberos_domain_name=config["sasl_kerberos_domain_name"],
         metadata_max_age_ms=config["metadata_max_age_ms"],
+        sasl_oauth_token_provider=sasl_oauth_token_provider,
     )
 
     message_format, deserializer = _configure_avro(
